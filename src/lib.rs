@@ -82,3 +82,11 @@ pub mod raftstore;
 pub mod pd;
 pub mod server;
 pub mod coprocessor;
+
+pub mod kvserver; //@PHILO
+
+//#[no_mangle]
+//pub extern fn call_main(){
+//    //main();
+//    println!("this is call_main");
+//}
