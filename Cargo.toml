@@ -9,7 +9,7 @@ time = "0.1"
 
 [features]
 default = []
-dev = ["clippy"]
+dev = ["clippy", "mem-profiling"]
 static-link = ["rocksdb/static-link"]
 portable = ["rocksdb/portable"]
 sse = ["rocksdb/sse"]
@@ -18,9 +18,14 @@ no-fail = ["fail/no_fail"]
 
 [lib]
 name = "tikv"
+#path ="src/bin/tikv-server.rs"
+#crate-type = ["dylib"]
 
 [[bin]]
 name = "tikv-server"
+#path ="src/bin/tikv-server.rs"
+#crate-type = ["dylib"]
+
 
 [[bin]]
 name = "bench-tikv"

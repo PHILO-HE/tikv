@@ -88,3 +88,5 @@ pub mod server;
 pub mod coprocessor;
 
 pub use storage::Storage;
+
+pub mod kvserver; //@PHILO
