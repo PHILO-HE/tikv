@@ -17,12 +17,12 @@
 
 #![allow(needless_pass_by_value)]
 
-//#[macro_use]  //@PHILO
+//#[macro_use] //@PHILO
 extern crate clap;
 #[cfg(feature = "mem-profiling")]
 extern crate jemallocator;
-//extern crate tikv;  @PHILO
-//#[macro_use] //@PHILO
+//extern crate tikv;  //@PHILO
+//#[macro_use]    //@PHILO
 extern crate log;
 extern crate rocksdb;
 extern crate mio;
@@ -30,8 +30,8 @@ extern crate toml;
 extern crate libc;
 extern crate fs2;
 #[cfg(unix)]
-//extern crate signal; //@PHILO
-pub extern crate signal;
+//extern crate signal;  //@PHILO
+pub extern crate signal;  //@PHILO
 #[cfg(unix)]
 extern crate nix;
 extern crate prometheus;
@@ -42,11 +42,11 @@ extern crate tokio_core;
 extern crate tempdir;
 extern crate grpcio as grpc;
 
-//mod signal_handler;  @PHILO
-use kvserver::signal_handler;
+//mod signal_handler; //@PHILO
+use kvserver::signal_handler;   //@PHILO
 #[cfg(unix)]
-//mod profiling; @PHILO
-use kvserver::profiling;
+//mod profiling;  //@PHILO
+use kvserver::profiling;  //@PHILO
 
 use std::process;
 use std::fs::{self, File};
@@ -57,12 +57,13 @@ use std::io::Read;
 use std::time::Duration;
 use std::env;
 
-//use clap::{Arg, App, ArgMatches}; @PHILO
-use self::clap::{Arg, App, ArgMatches};
+//use clap::{Arg, App, ArgMatches}; //@PIHLO
+use self::clap::{Arg, App, ArgMatches}; //@PHILO
 use rocksdb::{DBOptions, ColumnFamilyOptions, BlockBasedOptions};
 use fs2::FileExt;
 use sys_info::{cpu_num, mem_info};
 
+//@PHILO
 //use tikv::storage::{TEMP_DIR, CF_DEFAULT, CF_LOCK, CF_WRITE, CF_RAFT};
 //use tikv::util::{self, panic_hook, rocksdb as rocksdb_util};
 //use tikv::util::collections::HashMap;
@@ -95,7 +96,6 @@ use raftstore::store::{self, SnapManager};
 use pd::{RpcClient, PdClient};
 use raftstore::store::keys::region_raft_prefix_len;
 use util::time_monitor::TimeMonitor;
-
 
 const KB: u64 = 1024;
 const MB: u64 = 1024 * KB;
@@ -607,6 +607,7 @@ fn get_rocksdb_default_cf_option(config: &toml::Value, total_mem: u64) -> Column
         align_to_mb((total_mem as f64 * DEFAULT_BLOCK_CACHE_RATIO[0]) as u64) as i64;
     default_values.use_bloom_filter = true;
     default_values.whole_key_filtering = true;
+    default_values.compaction_pri = 3;
 
     get_rocksdb_cf_option(config, "defaultcf", default_values)
 }
@@ -617,6 +618,7 @@ fn get_rocksdb_write_cf_option(config: &toml::Value, total_mem: u64) -> ColumnFa
         align_to_mb((total_mem as f64 * DEFAULT_BLOCK_CACHE_RATIO[1]) as u64) as i64;
     default_values.use_bloom_filter = true;
     default_values.whole_key_filtering = false;
+    default_values.compaction_pri = 3;
 
     let mut cf_opts = get_rocksdb_cf_option(config, "writecf", default_values);
     // Prefix extractor(trim the timestamp at tail) for write cf.
@@ -962,19 +964,23 @@ fn run_raft_server(pd_client: RpcClient,
     }
 }
 
-//#[no_mangle]
-//pub extern fn call_main(){
-//    main();
-//}
-
-//fn main() {  @PHILO
+//fn main() {  //@PHILO
 pub fn main(cmd_vec: Vec<&str>) {
     let long_version: String = {
-        let (hash, time, rust_ver) = util::build_info();
-        format!("{}\nGit Commit Hash: {}\nUTC Build Time:  {}\nRust Version:    {}",
-                //crate_version!(), @PHILO
-                "1.1.1",
+        let (hash, branch, time, rust_ver) = util::build_info();
+        //PHILO
+//        format!("{}\nGit Commit Hash:   {}\nGit Commit Branch: {}\nUTC Build Time:    {}\nRust \
+//                 Version:      {}",
+//                crate_version!(),
+//                hash,
+//                branch,
+//                time,
+//                rust_ver)
+        //PHILO
+        format!("Git Commit Hash:   {}\nGit Commit Branch: {}\nUTC Build Time:    {}\nRust \
+                 Version:      {}",
                 hash,
+                branch,
                 time,
                 rust_ver)
     };
@@ -1050,10 +1056,8 @@ pub fn main(cmd_vec: Vec<&str>) {
             .help("Sets server labels")
             .long_help("Sets server labels. Uses `,` to separate kv pairs, like \
                         `zone=cn,disk=ssd`"))
-        //.get_matches();   //@PHILO
-            .get_matches_from(cmd_vec);
-//    let mut v= Vec::new();
-//    v.push("--pd=127.0.0.1:2379");
+//        .get_matches();
+        .get_matches_from(cmd_vec);
 
 
     let config = match matches.value_of("config") {
@@ -1086,12 +1090,10 @@ pub fn main(cmd_vec: Vec<&str>) {
         exit_with_err(format!("{:?}", e));
     }
 
-    //@PHILO
     let pd_endpoints = matches.value_of("pd-endpoints")
         .map(|s| s.to_owned())
         .or_else(|| get_toml_string_opt(&config, "pd.endpoints"))
         .expect("empty pd endpoints");
-    //let pd_endpoints="127.0.0.1:2379";
 
     for addr in pd_endpoints.split(',')
         .map(|s| s.trim())
