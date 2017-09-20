@@ -53,6 +53,14 @@ pub struct Server<T: RaftStoreRouter + 'static, S: StoreAddrResolver + 'static> 
     pd_scheduler: FutureScheduler<PdTask>,
 }
 
+static mut isReady: bool = false;
+
+pub fn isServerReady() -> bool {
+    unsafe {
+        return isReady;
+    }
+}
+
 impl<T: RaftStoreRouter, S: StoreAddrResolver + 'static> Server<T, S> {
     #[allow(too_many_arguments)]
     pub fn new(
@@ -152,6 +160,11 @@ impl<T: RaftStoreRouter, S: StoreAddrResolver + 'static> Server<T, S> {
         box_try!(self.snap_worker.start(snap_runner));
         self.grpc_server.start();
         info!("TiKV is ready to serve");
+
+        unsafe {
+            isReady = true;
+        }
+
         Ok(())
     }
 
