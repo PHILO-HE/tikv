@@ -97,6 +97,8 @@ use pd::{RpcClient, PdClient};
 use raftstore::store::keys::region_raft_prefix_len;
 use util::time_monitor::TimeMonitor;
 
+use server::server::isServerReady;
+
 const KB: u64 = 1024;
 const MB: u64 = 1024 * KB;
 const GB: u64 = 1024 * MB;
@@ -962,6 +964,10 @@ fn run_raft_server(pd_client: RpcClient,
     if let Some(Err(e)) = worker.stop().map(|h| h.join()) {
         info!("ignore failure when stopping resolver: {:?}", e);
     }
+}
+
+pub fn isTikvServerReady() -> bool {
+    return isServerReady();
 }
 
 //fn main() {  //@PHILO

@@ -52,6 +52,14 @@ pub struct Server<T: RaftStoreRouter + 'static, S: StoreAddrResolver + 'static> 
     snap_worker: Worker<SnapTask>,
 }
 
+static mut isReady: bool = false;
+
+pub fn isServerReady() -> bool {
+    unsafe {
+        return isReady;
+    }
+}
+
 impl<T: RaftStoreRouter, S: StoreAddrResolver + 'static> Server<T, S> {
     pub fn new(cfg: &Config,
                storage: Storage,
@@ -124,6 +132,11 @@ impl<T: RaftStoreRouter, S: StoreAddrResolver + 'static> Server<T, S> {
         box_try!(self.snap_worker.start(snap_runner));
         self.grpc_server.start();
         info!("TiKV is ready to serve");
+
+        unsafe {
+            isReady = true;
+        }
+
         Ok(())
     }
 
