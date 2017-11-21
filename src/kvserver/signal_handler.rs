@@ -18,22 +18,29 @@ mod imp {
 
     use std::{ptr, slice};
     use std::sync::Arc;
-    use libc::{self, c_void, c_char};
+    use libc::{self, c_char, c_int, c_void};
 
     use rocksdb::DB;
     use prometheus::{self, Encoder, TextEncoder};
-    //use profiling; @PHILO
-    use kvserver::profiling;
+    //use profiling;  //@PHILO
+    use kvserver::profiling;  //@PHILO
+
+
+//    use tikv::raftstore::store::Engines;   //@PHILO
+    use raftstore::store::Engines;
+
 
     const ROCKSDB_DB_STATS_KEY: &'static str = "rocksdb.dbstats";
     const ROCKSDB_CF_STATS_KEY: &'static str = "rocksdb.cfstats";
 
-//    @PHILO
+//@PHILO
 //    extern "C" {
 //        #[cfg_attr(target_os = "macos", link_name = "je_malloc_stats_print")]
-//        fn malloc_stats_print(write_cb: extern "C" fn(*mut c_void, *const c_char),
-//                              cbopaque: *mut c_void,
-//                              opts: *const c_char);
+//        fn malloc_stats_print(
+//            write_cb: extern "C" fn(*mut c_void, *const c_char),
+//            cbopaque: *mut c_void,
+//            opts: *const c_char,
+//        );
 //    }
 
     extern "C" fn write_cb(printer: *mut c_void, msg: *const c_char) {
@@ -45,27 +52,30 @@ mod imp {
         }
     }
 
-//    @PHILO
+//@PHILO
 //    fn print_malloc_stats() {
 //        let mut buf = Vec::new();
 //        unsafe {
-//            malloc_stats_print(write_cb,
-//                               &mut buf as *mut Vec<u8> as *mut c_void,
-//                               ptr::null())
+//            malloc_stats_print(
+//                write_cb,
+//                &mut buf as *mut Vec<u8> as *mut c_void,
+//                ptr::null(),
+//            )
 //        }
 //        info!("{}", String::from_utf8_lossy(&buf));
 //    }
 
     // TODO: remove backup_path from configuration
-    pub fn handle_signal(engine: Arc<DB>, _: &str) {
-        //use signal::trap::Trap; //@PHILO
+    pub fn handle_signal(engines: Engines, _: &str) {
+        //use signal::trap::Trap;  //@PHILO
         use kvserver::start::signal::trap::Trap;
-        use nix::sys::signal::{SIGTERM, SIGINT, SIGHUP, SIGUSR1, SIGUSR2};
+        use kvserver::start::nix::sys::signal::{SIGUSR1, SIGUSR2, SIGHUP, SIGINT, SIGTERM};
+
         let trap = Trap::trap(&[SIGTERM, SIGINT, SIGHUP, SIGUSR1, SIGUSR2]);
         for sig in trap {
             match sig {
                 SIGTERM | SIGINT | SIGHUP => {
-                    info!("receive signal {}, stopping server...", sig);
+                    info!("receive signal {}, stopping server...", sig as c_int);
                     break;
                 }
                 SIGUSR1 => {
@@ -76,24 +86,9 @@ mod imp {
                     encoder.encode(&metric_familys, &mut buffer).unwrap();
                     info!("{}", String::from_utf8(buffer).unwrap());
 
-                    // Log common rocksdb stats.
-                    for name in engine.cf_names() {
-                        let handler = engine.cf_handle(name).unwrap();
-                        if let Some(v) =
-                               engine.get_property_value_cf(handler, ROCKSDB_CF_STATS_KEY) {
-                            info!("{}", v)
-                        }
-                    }
-
-                    if let Some(v) = engine.get_property_value(ROCKSDB_DB_STATS_KEY) {
-                        info!("{}", v)
-                    }
-
-                    // Log more stats if enable_statistics is true.
-                    if let Some(v) = engine.get_statistics() {
-                        info!("{}", v)
-                    }
-                    //print_malloc_stats();  @PHILO
+                    //print_rocksdb_stats(&engines.kv_engine);  //@PHILO
+                    //print_rocksdb_stats(&engines.raft_engine);  //@PHILO
+                    //print_malloc_stats();  //@PHILO
                 }
                 SIGUSR2 => profiling::dump_prof(None),
                 // TODO: handle more signal
@@ -101,6 +96,26 @@ mod imp {
             }
         }
     }
+
+//@PHILO
+//    fn print_rocksdb_stats(engine: &Arc<DB>) {
+        // Log common rocksdb stats.
+//        for name in engine.cf_names() {
+//            let handler = engine.cf_handle(name).unwrap();
+//            if let Some(v) = engine.get_property_value_cf(handler, ROCKSDB_CF_STATS_KEY) {
+//                info!("{}", v)
+//            }
+//        }
+
+//        if let Some(v) = engine.get_property_value(ROCKSDB_DB_STATS_KEY) {
+//            info!("{}", v)
+//        }
+
+        // Log more stats if enable_statistics is true.
+//        if let Some(v) = engine.get_statistics() {
+//            info!("{}", v)
+//        }
+//    }
 
     #[cfg(test)]
     mod tests {

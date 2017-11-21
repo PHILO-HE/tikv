@@ -18,24 +18,25 @@ no-fail = ["fail/no_fail"]
 
 [lib]
 name = "tikv"
-#path ="src/bin/tikv-server.rs"
-#crate-type = ["dylib"]
+crate-type = ["dylib"]  #@PHILO
 
+#@PHILO
 #[[bin]]
 #name = "tikv-server"
 #path ="src/bin/tikv-server.rs"
-#crate-type = ["dylib"]
 
+#@PHILO
+#[[bin]]
+#name = "bench-tikv"
+#path = "benches/bin/bench-tikv.rs"
 
-[[bin]]
-name = "bench-tikv"
-path = "benches/bin/bench-tikv.rs"
+#@PHILO
+#[[bin]]
+#name = "tikv-ctl"
 
-[[bin]]
-name = "tikv-ctl"
-
-[[bin]]
-name = "tikv-fail"
+#@PHILO
+#[[bin]]
+#name = "tikv-fail"
 
 [[test]]
 name = "tests"
